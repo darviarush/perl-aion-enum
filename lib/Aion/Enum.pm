@@ -10,7 +10,6 @@ use Aion -role;
 
 # Импорт
 sub import {
-	my ($cls, %arg) = @_;
 	my $pkg = caller;
 	*{"${pkg}::issa"} = \&issa;
 	*{"${pkg}::case"} = \&case;
@@ -30,10 +29,10 @@ sub case(@) {
 	my $pkg = caller;
 
 	my $valisa = ${"${pkg}::__VALUE_ISA__"};
-	$valisa && $valisa->validate($value, $name);
+	$valisa && $valisa->validate($value, "$name value");
 	
 	my $staisa = ${"${pkg}::__STASH_ISA__"};
-	$staisa && $staisa->validate($stash, $name);
+	$staisa && $staisa->validate($stash, "$name stash");
 	
 	my $case = bless {
         name => $name,
@@ -149,7 +148,7 @@ sub tryFromName {
 # Получить case по значению c исключением
 sub fromValue {
 	my ($cls, $value) = @_;
-	my $case = $cls->tryFrom($value);
+	my $case = $cls->tryFromValue($value);
     die "Did not case with value `$value`!" unless defined $case;
 	$case
 }
@@ -158,6 +157,21 @@ sub fromValue {
 sub tryFromValue {
 	my ($cls, $value) = @_;
 	my ($case) = grep { $_->{value} ~~ $value } $cls->cases;
+	$case
+}
+
+# Получить case по значению c исключением
+sub fromStash {
+	my ($cls, $stash) = @_;
+	my $case = $cls->tryFromStash($stash);
+    die "Did not case with stash `$stash`!" unless defined $case;
+	$case
+}
+
+# Получить case по значению
+sub tryFromStash {
+	my ($cls, $stash) = @_;
+	my ($case) = grep { $_->{stash} ~~ $stash } $cls->cases;
 	$case
 }
 
@@ -243,6 +257,8 @@ C<Aion::Enum> позволяет создавать перечисления-о�
 
 Указывает тип (isa) значений и дополнений.
 
+Её название – отсылка к богине Иссе из повести «Под лунами Марса» Берроуза.
+
 	eval << 'END';
 	package StringEnum {
 	    use Aion::Enum;
@@ -252,7 +268,7 @@ C<Aion::Enum> позволяет создавать перечисления-о�
 	    case Active => "active";
 	}
 	END
-	$@ # ~> Active must have the type Int. The it is 'active'
+	$@ # ~> Active value must have the type Int. The it is 'active'
 	
 	eval << 'END';
 	package StringEnum {
@@ -263,7 +279,114 @@ C<Aion::Enum> позволяет создавать перечисления-о�
 	    case Active => "active", "passive";
 	}
 	END
-	$@ # ~> Active must have the type Int. The it is 'passive'
+	$@ # ~> Active stash must have the type Int. The it is 'passive'
+
+=head1 CLASS METHODS
+
+=head2 cases ($cls)
+
+Список перечислений.
+
+	[ OrderEnum->cases ] # --> [OrderEnum->First, OrderEnum->Second, OrderEnum->Other]
+
+=head2 names ($cls)
+
+Имена перечислений.
+
+	[ OrderEnum->names ] # --> [qw/First Second Other/]
+
+=head2 values ($cls)
+
+Значения перечислений.
+
+	[ OrderEnum->values ] # --> [undef, 2, 3]
+
+=head2 stashes ($cls)
+
+Дополнения перечислений.
+
+	[ OrderEnum->stashes ] # --> [undef, undef, {data => 123}]
+
+=head2 aliases ($cls)
+
+Псевдонимы перечислений.
+
+Файл lib/AuthorEnum.pm:
+
+	package AuthorEnum;
+	
+	use Aion::Enum;
+	
+	# Pushkin Aleksandr Sergeevich
+	case 'Pushkin';
+	
+	# Yacheykin Uriy
+	case 'Yacheykin';
+	
+	case 'Nouname';
+	
+	1;
+
+
+
+	require AuthorEnum;
+	[ AuthorEnum->aliases ] # --> ['Pushkin Aleksandr Sergeevich', 'Yacheykin Uriy', undef]
+
+=head2 fromName ($cls, $name)
+
+Получить case по имени c исключением.
+
+	OrderEnum->fromName('First') # -> OrderEnum->First
+	eval { OrderEnum->fromName('not_exists') }; $@ # ~> Did not case with name `not_exists`!
+
+=head2 tryFromName ($cls, $name)
+
+Получить case по имени.
+
+	OrderEnum->tryFromName('First')      # -> OrderEnum->First
+	OrderEnum->tryFromName('not_exists') # -> undef
+
+=head2 fromValue ($cls, $value)
+
+Получить case по значению c исключением.
+
+	OrderEnum->fromValue(undef) # -> OrderEnum->First
+	eval { OrderEnum->fromValue('not-exists') }; $@ # ~> Did not case with value `not-exists`!
+
+=head2 tryFromValue ($cls, $value)
+
+Получить case по значению.
+
+	OrderEnum->tryFromValue(undef)        # -> OrderEnum->First
+	OrderEnum->tryFromValue('not-exists') # -> undef
+
+=head2 fromStash ($cls, $stash)
+
+Получить case по дополнению c исключением.
+
+	OrderEnum->fromStash(undef) # -> OrderEnum->First
+	eval { OrderEnum->fromStash('not-exists') }; $@ # ~> Did not case with stash `not-exists`!
+
+=head2 tryFromStash ($cls, $value)
+
+Получить case по дополнению.
+
+	OrderEnum->tryFromStash({data => 123}) # -> OrderEnum->Other
+	OrderEnum->tryFromStash('not-exists')  # -> undef
+
+=head2 fromAlias ($cls, $alias)
+
+Получить case по псевдониму c исключением.
+
+	AuthorEnum->fromAlias('Yacheykin Uriy') # -> AuthorEnum->Yacheykin
+	eval { AuthorEnum->fromAlias('not-exists') }; $@ # ~> Did not case with alias `not-exists`!
+
+=head2 tryFromAlias ($cls, $alias)
+
+Получить case по псевдониму
+
+	AuthorEnum->tryFromAlias('Yacheykin Uriy') # -> AuthorEnum->Yacheykin
+	AuthorEnum->tryFromAlias('not-exists')     # -> undef
 
 =head1 FEATURES
 

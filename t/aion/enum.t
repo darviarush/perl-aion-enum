@@ -63,6 +63,8 @@ package OrderEnum {
 # 
 # Указывает тип (isa) значений и дополнений.
 # 
+# Её название – отсылка к богине Иссе из повести «Под лунами Марса» Берроуза.
+# 
 done_testing; }; subtest 'issa ($valisa, [$staisa])' => sub { 
 eval << 'END';
 package StringEnum {
@@ -73,7 +75,7 @@ package StringEnum {
     case Active => "active";
 }
 END
-::like scalar do {$@}, qr!Active must have the type Int. The it is 'active'!, '$@ # ~> Active must have the type Int. The it is \'active\'';
+::like scalar do {$@}, qr!Active value must have the type Int. The it is 'active'!, '$@ # ~> Active value must have the type Int. The it is \'active\'';
 
 eval << 'END';
 package StringEnum {
@@ -84,7 +86,139 @@ package StringEnum {
     case Active => "active", "passive";
 }
 END
-::like scalar do {$@}, qr!Active must have the type Int. The it is 'passive'!, '$@ # ~> Active must have the type Int. The it is \'passive\'';
+::like scalar do {$@}, qr!Active stash must have the type Int. The it is 'passive'!, '$@ # ~> Active stash must have the type Int. The it is \'passive\'';
+
+# 
+# # CLASS METHODS
+# 
+# ## cases ($cls)
+# 
+# Список перечислений.
+# 
+done_testing; }; subtest 'cases ($cls)' => sub { 
+::is_deeply scalar do {[ OrderEnum->cases ]}, scalar do {[OrderEnum->First, OrderEnum->Second, OrderEnum->Other]}, '[ OrderEnum->cases ] # --> [OrderEnum->First, OrderEnum->Second, OrderEnum->Other]';
+
+# 
+# ## names ($cls)
+# 
+# Имена перечислений.
+# 
+done_testing; }; subtest 'names ($cls)' => sub { 
+::is_deeply scalar do {[ OrderEnum->names ]}, scalar do {[qw/First Second Other/]}, '[ OrderEnum->names ] # --> [qw/First Second Other/]';
+
+# 
+# ## values ($cls)
+# 
+# Значения перечислений.
+# 
+done_testing; }; subtest 'values ($cls)' => sub { 
+::is_deeply scalar do {[ OrderEnum->values ]}, scalar do {[undef, 2, 3]}, '[ OrderEnum->values ] # --> [undef, 2, 3]';
+
+# 
+# ## stashes ($cls)
+# 
+# Дополнения перечислений.
+# 
+done_testing; }; subtest 'stashes ($cls)' => sub { 
+::is_deeply scalar do {[ OrderEnum->stashes ]}, scalar do {[undef, undef, {data => 123}]}, '[ OrderEnum->stashes ] # --> [undef, undef, {data => 123}]';
+
+# 
+# ## aliases ($cls)
+# 
+# Псевдонимы перечислений.
+# 
+# Файл lib/AuthorEnum.pm:
+#@> lib/AuthorEnum.pm
+#>> package AuthorEnum;
+#>> 
+#>> use Aion::Enum;
+#>> 
+#>> # Pushkin Aleksandr Sergeevich
+#>> case 'Pushkin';
+#>> 
+#>> # Yacheykin Uriy
+#>> case 'Yacheykin';
+#>> 
+#>> case 'Nouname';
+#>> 
+#>> 1;
+#@< EOF
+# 
+done_testing; }; subtest 'aliases ($cls)' => sub { 
+require AuthorEnum;
+::is_deeply scalar do {[ AuthorEnum->aliases ]}, scalar do {['Pushkin Aleksandr Sergeevich', 'Yacheykin Uriy', undef]}, '[ AuthorEnum->aliases ] # --> [\'Pushkin Aleksandr Sergeevich\', \'Yacheykin Uriy\', undef]';
+
+# 
+# ## fromName ($cls, $name)
+# 
+# Получить case по имени c исключением.
+# 
+done_testing; }; subtest 'fromName ($cls, $name)' => sub { 
+::is scalar do {OrderEnum->fromName('First')}, scalar do{OrderEnum->First}, 'OrderEnum->fromName(\'First\') # -> OrderEnum->First';
+::like scalar do {eval { OrderEnum->fromName('not_exists') }; $@}, qr!Did not case with name `not_exists`\!!, 'eval { OrderEnum->fromName(\'not_exists\') }; $@ # ~> Did not case with name `not_exists`!';
+
+# 
+# ## tryFromName ($cls, $name)
+# 
+# Получить case по имени.
+# 
+done_testing; }; subtest 'tryFromName ($cls, $name)' => sub { 
+::is scalar do {OrderEnum->tryFromName('First')}, scalar do{OrderEnum->First}, 'OrderEnum->tryFromName(\'First\')      # -> OrderEnum->First';
+::is scalar do {OrderEnum->tryFromName('not_exists')}, scalar do{undef}, 'OrderEnum->tryFromName(\'not_exists\') # -> undef';
+
+# 
+# ## fromValue ($cls, $value)
+# 
+# Получить case по значению c исключением.
+# 
+done_testing; }; subtest 'fromValue ($cls, $value)' => sub { 
+::is scalar do {OrderEnum->fromValue(undef)}, scalar do{OrderEnum->First}, 'OrderEnum->fromValue(undef) # -> OrderEnum->First';
+::like scalar do {eval { OrderEnum->fromValue('not-exists') }; $@}, qr!Did not case with value `not-exists`\!!, 'eval { OrderEnum->fromValue(\'not-exists\') }; $@ # ~> Did not case with value `not-exists`!';
+
+# 
+# ## tryFromValue ($cls, $value)
+# 
+# Получить case по значению.
+# 
+done_testing; }; subtest 'tryFromValue ($cls, $value)' => sub { 
+::is scalar do {OrderEnum->tryFromValue(undef)}, scalar do{OrderEnum->First}, 'OrderEnum->tryFromValue(undef)        # -> OrderEnum->First';
+::is scalar do {OrderEnum->tryFromValue('not-exists')}, scalar do{undef}, 'OrderEnum->tryFromValue(\'not-exists\') # -> undef';
+
+# 
+# ## fromStash ($cls, $stash)
+# 
+# Получить case по дополнению c исключением.
+# 
+done_testing; }; subtest 'fromStash ($cls, $stash)' => sub { 
+::is scalar do {OrderEnum->fromStash(undef)}, scalar do{OrderEnum->First}, 'OrderEnum->fromStash(undef) # -> OrderEnum->First';
+::like scalar do {eval { OrderEnum->fromStash('not-exists') }; $@}, qr!Did not case with stash `not-exists`\!!, 'eval { OrderEnum->fromStash(\'not-exists\') }; $@ # ~> Did not case with stash `not-exists`!';
+
+# 
+# ## tryFromStash ($cls, $value)
+# 
+# Получить case по дополнению.
+# 
+done_testing; }; subtest 'tryFromStash ($cls, $value)' => sub { 
+::is scalar do {OrderEnum->tryFromStash({data => 123})}, scalar do{OrderEnum->Other}, 'OrderEnum->tryFromStash({data => 123}) # -> OrderEnum->Other';
+::is scalar do {OrderEnum->tryFromStash('not-exists')}, scalar do{undef}, 'OrderEnum->tryFromStash(\'not-exists\')  # -> undef';
+
+# 
+# ## fromAlias ($cls, $alias)
+# 
+# Получить case по псевдониму c исключением.
+# 
+done_testing; }; subtest 'fromAlias ($cls, $alias)' => sub { 
+::is scalar do {AuthorEnum->fromAlias('Yacheykin Uriy')}, scalar do{AuthorEnum->Yacheykin}, 'AuthorEnum->fromAlias(\'Yacheykin Uriy\') # -> AuthorEnum->Yacheykin';
+::like scalar do {eval { AuthorEnum->fromAlias('not-exists') }; $@}, qr!Did not case with alias `not-exists`\!!, 'eval { AuthorEnum->fromAlias(\'not-exists\') }; $@ # ~> Did not case with alias `not-exists`!';
+
+# 
+# ## tryFromAlias ($cls, $alias)
+# 
+# Получить case по псевдониму
+# 
+done_testing; }; subtest 'tryFromAlias ($cls, $alias)' => sub { 
+::is scalar do {AuthorEnum->tryFromAlias('Yacheykin Uriy')}, scalar do{AuthorEnum->Yacheykin}, 'AuthorEnum->tryFromAlias(\'Yacheykin Uriy\') # -> AuthorEnum->Yacheykin';
+::is scalar do {AuthorEnum->tryFromAlias('not-exists')}, scalar do{undef}, 'AuthorEnum->tryFromAlias(\'not-exists\')     # -> undef';
 
 # 
 # # FEATURES

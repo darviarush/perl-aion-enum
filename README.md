@@ -1,3 +1,4 @@
+[![Actions Status](https://github.com/darviarush/perl-aion-enum/actions/workflows/test.yml/badge.svg)](https://github.com/darviarush/perl-aion-enum/actions)
 # NAME
 
 Aion::Enum - перечисления в стиле ООП, когда каждое перечсление является объектом
@@ -63,6 +64,8 @@ package OrderEnum {
 
 Указывает тип (isa) значений и дополнений.
 
+Её название – отсылка к богине Иссе из повести «Под лунами Марса» Берроуза.
+
 ```perl
 eval << 'END';
 package StringEnum {
@@ -73,7 +76,7 @@ package StringEnum {
     case Active => "active";
 }
 END
-$@ # ~> Active must have the type Int. The it is 'active'
+$@ # ~> Active value must have the type Int. The it is 'active'
 
 eval << 'END';
 package StringEnum {
@@ -84,7 +87,139 @@ package StringEnum {
     case Active => "active", "passive";
 }
 END
-$@ # ~> Active must have the type Int. The it is 'passive'
+$@ # ~> Active stash must have the type Int. The it is 'passive'
+```
+
+# CLASS METHODS
+
+## cases ($cls)
+
+Список перечислений.
+
+```perl
+[ OrderEnum->cases ] # --> [OrderEnum->First, OrderEnum->Second, OrderEnum->Other]
+```
+
+## names ($cls)
+
+Имена перечислений.
+
+```perl
+[ OrderEnum->names ] # --> [qw/First Second Other/]
+```
+
+## values ($cls)
+
+Значения перечислений.
+
+```perl
+[ OrderEnum->values ] # --> [undef, 2, 3]
+```
+
+## stashes ($cls)
+
+Дополнения перечислений.
+
+```perl
+[ OrderEnum->stashes ] # --> [undef, undef, {data => 123}]
+```
+
+## aliases ($cls)
+
+Псевдонимы перечислений.
+
+Файл lib/AuthorEnum.pm:
+```perl
+package AuthorEnum;
+
+use Aion::Enum;
+
+# Pushkin Aleksandr Sergeevich
+case 'Pushkin';
+
+# Yacheykin Uriy
+case 'Yacheykin';
+
+case 'Nouname';
+
+1;
+```
+
+```perl
+require AuthorEnum;
+[ AuthorEnum->aliases ] # --> ['Pushkin Aleksandr Sergeevich', 'Yacheykin Uriy', undef]
+```
+
+## fromName ($cls, $name)
+
+Получить case по имени c исключением.
+
+```perl
+OrderEnum->fromName('First') # -> OrderEnum->First
+eval { OrderEnum->fromName('not_exists') }; $@ # ~> Did not case with name `not_exists`!
+```
+
+## tryFromName ($cls, $name)
+
+Получить case по имени.
+
+```perl
+OrderEnum->tryFromName('First')      # -> OrderEnum->First
+OrderEnum->tryFromName('not_exists') # -> undef
+```
+
+## fromValue ($cls, $value)
+
+Получить case по значению c исключением.
+
+```perl
+OrderEnum->fromValue(undef) # -> OrderEnum->First
+eval { OrderEnum->fromValue('not-exists') }; $@ # ~> Did not case with value `not-exists`!
+```
+
+## tryFromValue ($cls, $value)
+
+Получить case по значению.
+
+```perl
+OrderEnum->tryFromValue(undef)        # -> OrderEnum->First
+OrderEnum->tryFromValue('not-exists') # -> undef
+```
+
+## fromStash ($cls, $stash)
+
+Получить case по дополнению c исключением.
+
+```perl
+OrderEnum->fromStash(undef) # -> OrderEnum->First
+eval { OrderEnum->fromStash('not-exists') }; $@ # ~> Did not case with stash `not-exists`!
+```
+
+## tryFromStash ($cls, $value)
+
+Получить case по дополнению.
+
+```perl
+OrderEnum->tryFromStash({data => 123}) # -> OrderEnum->Other
+OrderEnum->tryFromStash('not-exists')  # -> undef
+```
+
+## fromAlias ($cls, $alias)
+
+Получить case по псевдониму c исключением.
+
+```perl
+AuthorEnum->fromAlias('Yacheykin Uriy') # -> AuthorEnum->Yacheykin
+eval { AuthorEnum->fromAlias('not-exists') }; $@ # ~> Did not case with alias `not-exists`!
+```
+
+## tryFromAlias ($cls, $alias)
+
+Получить case по псевдониму
+
+```perl
+AuthorEnum->tryFromAlias('Yacheykin Uriy') # -> AuthorEnum->Yacheykin
+AuthorEnum->tryFromAlias('not-exists')     # -> undef
 ```
 
 # FEATURES
