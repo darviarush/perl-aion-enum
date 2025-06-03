@@ -1,5 +1,5 @@
 !ru:en
-[![Coverage](https://raw.githubusercontent.com/darviarush/perl-aion/master/doc/badges/total.svg?sanitize=true)](http://matrix.cpantesters.org/?dist=Aion::Enum)
+[![Coverage](https://raw.githubusercontent.com/darviarush/perl-aion-enum/master/doc/badges/total.svg?sanitize=true)](http://matrix.cpantesters.org/?dist=Aion::Enum)
 # NAME
 
 Aion::Enum - перечисления в стиле ООП, когда каждое перечсление является объектом
