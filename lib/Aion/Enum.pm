@@ -196,15 +196,7 @@ __END__
 
 =encoding utf-8
 
-
-
-=begin HTML
-
-<img src="https://raw.githubusercontent.com/darviarush/perl-aion/master/doc/badges/total.svg?sanitize=true" alt="Coverage" />
-
-=end HTML
-
-
+LL<http://matrix.cpantesters.org/?dist=Aion::Enum>
 =head1 NAME
 
 Aion :: Enum - Listing in the style of OOP, when each renewal is an object
