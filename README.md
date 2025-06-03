@@ -1,4 +1,4 @@
-[![Actions Status](https://github.com/darviarush/perl-aion-enum/actions/workflows/test.yml/badge.svg)](https://github.com/darviarush/perl-aion-enum/actions)
+![Coverage](https://raw.githubusercontent.com/darviarush/perl-aion/master/doc/badges/total.svg?sanitize=true)
 # NAME
 
 Aion::Enum - перечисления в стиле ООП, когда каждое перечсление является объектом
@@ -289,11 +289,10 @@ require AliasEnum;
 AliasEnum->Piter->alias # => Piter Pan
 ```
 
-# METHODS
+# SEE ALSO
 
-## from ($value)
-
-
+1. [enum](https://metacpan.org/pod/enum).
+2. [Class::Enum](https://metacpan.org/pod/Class::Enum).
 
 # AUTHOR
 

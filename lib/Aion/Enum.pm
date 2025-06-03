@@ -196,9 +196,18 @@ __END__
 
 =encoding utf-8
 
+
+
+=begin HTML
+
+<img src="https://raw.githubusercontent.com/darviarush/perl-aion/master/doc/badges/total.svg?sanitize=true" alt="Coverage" />
+
+=end HTML
+
+
 =head1 NAME
 
-Aion::Enum - перечисления в стиле ООП, когда каждое перечсление является объектом
+Aion :: Enum - Listing in the style of OOP, when each renewal is an object
 
 =head1 VERSION
 
@@ -223,15 +232,15 @@ Aion::Enum - перечисления в стиле ООП, когда кажд�
 
 =head1 DESCRIPTION
 
-C<Aion::Enum> позволяет создавать перечисления-объекты. Данные перечисления могут содержать дополнительные методы и свойства. В них можно добавлять роли (с помощью C<with>) или использовать их самих как роли.
+C<Aion :: Enum> allows you to create transfers-objects. These transfers may contain additional methods and properties. You can add roles to them (using C<with>) or use them as a role.
 
-Важной особенностью является сохранение порядка перечисления.
+An important feature is the preservation of the procedure for listing.
 
 =head1 SUBROUTINES
 
 =head2 case ($name, [$value, [$stash]])
 
-Создаёт перечисление: его константу.
+Creates a listing: his constant.
 
 	package OrderEnum {
 	    use Aion::Enum;
@@ -255,9 +264,9 @@ C<Aion::Enum> позволяет создавать перечисления-о�
 
 =head2 issa ($valisa, [$staisa])
 
-Указывает тип (isa) значений и дополнений.
+Indicates the type (ISA) of meanings and additions.
 
-Её название – отсылка к богине Иссе из повести «Под лунами Марса» Берроуза.
+Its name is a reference to the goddess Isse from the story “Under the Moles of Mars” Burrose.
 
 	eval << 'END';
 	package StringEnum {
@@ -285,33 +294,33 @@ C<Aion::Enum> позволяет создавать перечисления-о�
 
 =head2 cases ($cls)
 
-Список перечислений.
+List of transfers.
 
 	[ OrderEnum->cases ] # --> [OrderEnum->First, OrderEnum->Second, OrderEnum->Other]
 
 =head2 names ($cls)
 
-Имена перечислений.
+Names of transfers.
 
 	[ OrderEnum->names ] # --> [qw/First Second Other/]
 
 =head2 values ($cls)
 
-Значения перечислений.
+The values of the transfers.
 
 	[ OrderEnum->values ] # --> [undef, 2, 3]
 
 =head2 stashes ($cls)
 
-Дополнения перечислений.
+Additions of transfers.
 
 	[ OrderEnum->stashes ] # --> [undef, undef, {data => 123}]
 
 =head2 aliases ($cls)
 
-Псевдонимы перечислений.
+Pseudonyms of transfers.
 
-Файл lib/AuthorEnum.pm:
+LIB/authorenum.pm file:
 
 	package AuthorEnum;
 	
@@ -334,56 +343,56 @@ C<Aion::Enum> позволяет создавать перечисления-о�
 
 =head2 fromName ($cls, $name)
 
-Получить case по имени c исключением.
+Get Case by name with exceptions.
 
 	OrderEnum->fromName('First') # -> OrderEnum->First
 	eval { OrderEnum->fromName('not_exists') }; $@ # ~> Did not case with name `not_exists`!
 
 =head2 tryFromName ($cls, $name)
 
-Получить case по имени.
+Get Case by name.
 
 	OrderEnum->tryFromName('First')      # -> OrderEnum->First
 	OrderEnum->tryFromName('not_exists') # -> undef
 
 =head2 fromValue ($cls, $value)
 
-Получить case по значению c исключением.
+Get Case by value with exceptions.
 
 	OrderEnum->fromValue(undef) # -> OrderEnum->First
 	eval { OrderEnum->fromValue('not-exists') }; $@ # ~> Did not case with value `not-exists`!
 
 =head2 tryFromValue ($cls, $value)
 
-Получить case по значению.
+Get Case by value.
 
 	OrderEnum->tryFromValue(undef)        # -> OrderEnum->First
 	OrderEnum->tryFromValue('not-exists') # -> undef
 
 =head2 fromStash ($cls, $stash)
 
-Получить case по дополнению c исключением.
+Get CASE on addition with exceptions.
 
 	OrderEnum->fromStash(undef) # -> OrderEnum->First
 	eval { OrderEnum->fromStash('not-exists') }; $@ # ~> Did not case with stash `not-exists`!
 
 =head2 tryFromStash ($cls, $value)
 
-Получить case по дополнению.
+Get Case for addition.
 
 	OrderEnum->tryFromStash({data => 123}) # -> OrderEnum->Other
 	OrderEnum->tryFromStash('not-exists')  # -> undef
 
 =head2 fromAlias ($cls, $alias)
 
-Получить case по псевдониму c исключением.
+Get Case by pseudonym with exceptions.
 
 	AuthorEnum->fromAlias('Yacheykin Uriy') # -> AuthorEnum->Yacheykin
 	eval { AuthorEnum->fromAlias('not-exists') }; $@ # ~> Did not case with alias `not-exists`!
 
 =head2 tryFromAlias ($cls, $alias)
 
-Получить case по псевдониму
+Get Case by pseudonym
 
 	AuthorEnum->tryFromAlias('Yacheykin Uriy') # -> AuthorEnum->Yacheykin
 	AuthorEnum->tryFromAlias('not-exists')     # -> undef
@@ -392,7 +401,7 @@ C<Aion::Enum> позволяет создавать перечисления-о�
 
 =head2 name
 
-Свойство только для чтения.
+Property only for reading.
 
 	package NameEnum {
 	    use Aion::Enum;
@@ -404,7 +413,7 @@ C<Aion::Enum> позволяет создавать перечисления-о�
 
 =head2 value
 
-Свойство только для чтения.
+Property only for reading.
 
 	package ValueEnum {
 	    use Aion::Enum;
@@ -416,7 +425,7 @@ C<Aion::Enum> позволяет создавать перечисления-о�
 
 =head2 stash
 
-Свойство только для чтения.
+Property only for reading.
 
 	package StashEnum {
 	    use Aion::Enum;
@@ -428,11 +437,11 @@ C<Aion::Enum> позволяет создавать перечисления-о�
 
 =head2 alias
 
-Свойство только для чтения.
+Property only for reading.
 
-Алиасы работают только если пакет находится в модуле, так как считывают комментарий перед кейсом за счёт рефлексии.
+Aliases work only if the package is in the module, as they read the comment before the case due to reflection.
 
-Файл lib/AliasEnum.pm:
+LIB/aliasenum.pm file:
 
 	package AliasEnum;
 	
@@ -448,9 +457,15 @@ C<Aion::Enum> позволяет создавать перечисления-о�
 	require AliasEnum;
 	AliasEnum->Piter->alias # => Piter Pan
 
-=head1 METHODS
+=head1 SEE ALSO
 
-=head2 from ($value)
+=over
+
+=item 1. L<enum>.
+
+=item 2. L<Class::Enum>.
+
+=back
 
 =head1 AUTHOR
 
@@ -460,8 +475,8 @@ Yaroslav O. Kosmina LL<mailto:dart@cpan.org>
 
 This is free software; you can redistribute it and/or modify it under the same terms as the Perl 5 programming language system itself.
 
-⚖ B<GPLv3>
+⚖ I<* gplv3 *>
 
 =head1 COPYRIGHT
 
-The Aion::Enum module is copyright © 2025 Yaroslav O. Kosmina. Rusland. All rights reserved.
+The Aion :: Enum Module is Copyright © 2025 Yaroslav O. Kosmina. Rusland. All Rights Reserved.
