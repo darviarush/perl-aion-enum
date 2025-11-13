@@ -1,11 +1,11 @@
-[![Actions Status](https://github.com/darviarush/perl-aion-enum/actions/workflows/test.yml/badge.svg)](https://github.com/darviarush/perl-aion-enum/actions) [![MetaCPAN Release](https://badge.fury.io/pl/Aion-Enum.svg)](https://metacpan.org/release/Aion-Enum) [![Coverage](https://raw.githubusercontent.com/darviarush/perl-aion-enum/master/doc/badges/total.svg)](https://fast2-matrix.cpantesters.org/?dist=Aion-Enum+0.0.0-prealpha)
+[![Actions Status](https://github.com/darviarush/perl-aion-enum/actions/workflows/test.yml/badge.svg)](https://github.com/darviarush/perl-aion-enum/actions) [![MetaCPAN Release](https://badge.fury.io/pl/Aion-Enum.svg)](https://metacpan.org/release/Aion-Enum) [![Coverage](https://raw.githubusercontent.com/darviarush/perl-aion-enum/master/doc/badges/total.svg)](https://fast2-matrix.cpantesters.org/?dist=Aion-Enum+0.0.1)
 # NAME
 
 Aion::Enum - перечисления в стиле ООП, когда каждое перечсление является объектом
 
 # VERSION
 
-0.0.0-prealpha
+0.0.1
 
 # SYNOPSIS
 

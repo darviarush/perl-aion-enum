@@ -3,7 +3,7 @@ use 5.22.0;
 no strict; no warnings; no diagnostics;
 use common::sense;
 
-our $VERSION = "0.0.0-prealpha";
+our $VERSION = "0.0.1";
 
 use constant;
 use Aion -role;
@@ -209,7 +209,7 @@ Aion :: Enum - Listing in the style of OOP, when each renewal is an object
 
 =head1 VERSION
 
-0.0.0-prealpha
+0.0.1
 
 =head1 SYNOPSIS
 
