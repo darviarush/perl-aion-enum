@@ -1,28 +1,44 @@
-[![Actions Status](https://github.com/darviarush/perl-aion-enum/actions/workflows/test.yml/badge.svg)](https://github.com/darviarush/perl-aion-enum/actions) [![MetaCPAN Release](https://badge.fury.io/pl/Aion-Enum.svg)](https://metacpan.org/release/Aion-Enum) [![Coverage](https://raw.githubusercontent.com/darviarush/perl-aion-enum/master/doc/badges/total.svg)](https://fast2-matrix.cpantesters.org/?dist=Aion-Enum+0.0.2)
+[![Actions Status](https://github.com/darviarush/perl-aion-enum/actions/workflows/test.yml/badge.svg)](https://github.com/darviarush/perl-aion-enum/actions) [![MetaCPAN Release](https://badge.fury.io/pl/Aion-Enum.svg)](https://metacpan.org/release/Aion-Enum) [![Coverage](https://raw.githubusercontent.com/darviarush/perl-aion-enum/master/doc/badges/total.svg)](https://fast2-matrix.cpantesters.org/?dist=Aion-Enum+0.0.3)
 # NAME
 
 Aion::Enum - перечисления в стиле ООП, когда каждое перечсление является объектом
 
 # VERSION
 
-0.0.2
+0.0.3
 
 # SYNOPSIS
 
+Файл lib/StatusEnum.pm:
 ```perl
-package StatusEnum {
-    use Aion::Enum;
+package StatusEnum;
 
-    case 'Active';
-    case 'Passive';
-}
+use Aion::Enum;
 
-&StatusEnum::Active->does('Aion::Enum') # => 1
+# Active status
+case active => 1, 'Active';
 
-StatusEnum->Active->name  # => Active
-StatusEnum->Passive->name # => Passive
+# Passive status
+case passive => 2, 'Passive';
 
-[ StatusEnum->names ] # --> [qw/Active Passive/]
+1;
+```
+
+```perl
+use StatusEnum;
+
+&StatusEnum::active->does('Aion::Enum') # => 1
+
+StatusEnum->active->name   # => active
+StatusEnum->passive->value # => 2
+StatusEnum->active->alias  # => Active status
+StatusEnum->passive->stash # => Passive
+
+[ StatusEnum->cases   ] # --> [StatusEnum->active, StatusEnum->passive]
+[ StatusEnum->names   ] # --> [qw/active passive/]
+[ StatusEnum->values  ] # --> [qw/1 2/]
+[ StatusEnum->aliases ] # --> ['Active status', 'Passive status']
+[ StatusEnum->stashes ] # --> [qw/Active Passive/]
 ```
 
 # DESCRIPTION
@@ -43,52 +59,67 @@ StatusEnum->Passive->name # => Passive
 package OrderEnum {
     use Aion::Enum;
 
-    case 'First';
-    case Second => 2;
-    case Other  => 3, {data => 123};
+    case 'first';
+    case second => 2;
+    case other  => 3, {data => 123};
 }
 
-&OrderEnum::First->name  # => First
-&OrderEnum::First->value # -> undef
-&OrderEnum::First->stash # -> undef
+&OrderEnum::first->name  # => first
+&OrderEnum::first->value # -> undef
+&OrderEnum::first->stash # -> undef
 
-&OrderEnum::Second->name  # => Second
-&OrderEnum::Second->value # -> 2
-&OrderEnum::Second->stash # -> undef
+&OrderEnum::second->name  # => second
+&OrderEnum::second->value # -> 2
+&OrderEnum::second->stash # -> undef
 
-&OrderEnum::Other->name  # => Other
-&OrderEnum::Other->value # -> 3
-&OrderEnum::Other->stash # --> {data => 123}
+&OrderEnum::other->name  # => other
+&OrderEnum::other->value # -> 3
+&OrderEnum::other->stash # --> {data => 123}
 ```
 
-## issa ($valisa, [$staisa])
+## issa ($nameisa, [$valueisa], [$stashisa], [$aliasisa])
 
 Указывает тип (isa) значений и дополнений.
 
 Её название – отсылка к богине Иссе из повести «Под лунами Марса» Берроуза.
 
 ```perl
-eval << 'END';
-package StringEnum {
+eval {
+package StringEnum;
     use Aion::Enum;
 
-    issa Int;
+    issa Str => Int => Undef => Undef;
 
-    case Active => "active";
-}
-END
-$@ # ~> Active value must have the type Int. The it is 'active'
+    case active => "Active";
+};
+$@ # ~> active value must have the type Int. The it is 'Active'
 
-eval << 'END';
-package StringEnum {
+eval {
+package StringEnum;
     use Aion::Enum;
 
-    issa Str, Int;
+    issa Str => Str => Int;
 
-    case Active => "active", "passive";
-}
-END
-$@ # ~> Active stash must have the type Int. The it is 'passive'
+    case active => "Active", "Passive";
+};
+$@ # ~> active stash must have the type Int. The it is 'Passive'
+```
+
+Файл lib/StringEnum.pm:
+```perl
+package StringEnum;
+use Aion::Enum;
+
+issa Str => Undef => Undef => StrMatch[qr/^[A-Z]/];
+
+# pushkin
+case active => ;
+
+1;
+```
+
+```perl
+require StringEnum # @-> active alias must have the type StrMatch[qr/^[A-Z]/]. The it is 'pushkin'!
 ```
 
 # CLASS METHODS
@@ -98,7 +129,7 @@ $@ # ~> Active stash must have the type Int. The it is 'passive'
 Список перечислений.
 
 ```perl
-[ OrderEnum->cases ] # --> [OrderEnum->First, OrderEnum->Second, OrderEnum->Other]
+[ OrderEnum->cases ] # --> [OrderEnum->first, OrderEnum->second, OrderEnum->other]
 ```
 
 ## names ($cls)
@@ -106,7 +137,7 @@ $@ # ~> Active stash must have the type Int. The it is 'passive'
 Имена перечислений.
 
 ```perl
-[ OrderEnum->names ] # --> [qw/First Second Other/]
+[ OrderEnum->names ] # --> [qw/first second other/]
 ```
 
 ## values ($cls)
@@ -136,12 +167,12 @@ package AuthorEnum;
 use Aion::Enum;
 
 # Pushkin Aleksandr Sergeevich
-case 'Pushkin';
+case pushkin =>;
 
 # Yacheykin Uriy
-case 'Yacheykin';
+case yacheykin =>;
 
-case 'Nouname';
+case nouname =>;
 
 1;
 ```
@@ -156,7 +187,7 @@ require AuthorEnum;
 Получить case по имени c исключением.
 
 ```perl
-OrderEnum->fromName('First') # -> OrderEnum->First
+OrderEnum->fromName('first') # -> OrderEnum->first
 eval { OrderEnum->fromName('not_exists') }; $@ # ~> Did not case with name `not_exists`!
 ```
 
@@ -165,7 +196,7 @@ eval { OrderEnum->fromName('not_exists') }; $@ # ~> Did not case with name `not_
 Получить case по имени.
 
 ```perl
-OrderEnum->tryFromName('First')      # -> OrderEnum->First
+OrderEnum->tryFromName('first')      # -> OrderEnum->first
 OrderEnum->tryFromName('not_exists') # -> undef
 ```
 
@@ -174,7 +205,7 @@ OrderEnum->tryFromName('not_exists') # -> undef
 Получить case по значению c исключением.
 
 ```perl
-OrderEnum->fromValue(undef) # -> OrderEnum->First
+OrderEnum->fromValue(undef) # -> OrderEnum->first
 eval { OrderEnum->fromValue('not-exists') }; $@ # ~> Did not case with value `not-exists`!
 ```
 
@@ -183,7 +214,7 @@ eval { OrderEnum->fromValue('not-exists') }; $@ # ~> Did not case with value `no
 Получить case по значению.
 
 ```perl
-OrderEnum->tryFromValue(undef)        # -> OrderEnum->First
+OrderEnum->tryFromValue(undef)        # -> OrderEnum->first
 OrderEnum->tryFromValue('not-exists') # -> undef
 ```
 
@@ -192,7 +223,7 @@ OrderEnum->tryFromValue('not-exists') # -> undef
 Получить case по дополнению c исключением.
 
 ```perl
-OrderEnum->fromStash(undef) # -> OrderEnum->First
+OrderEnum->fromStash(undef) # -> OrderEnum->first
 eval { OrderEnum->fromStash('not-exists') }; $@ # ~> Did not case with stash `not-exists`!
 ```
 
@@ -201,7 +232,7 @@ eval { OrderEnum->fromStash('not-exists') }; $@ # ~> Did not case with stash `no
 Получить case по дополнению.
 
 ```perl
-OrderEnum->tryFromStash({data => 123}) # -> OrderEnum->Other
+OrderEnum->tryFromStash({data => 123}) # -> OrderEnum->other
 OrderEnum->tryFromStash('not-exists')  # -> undef
 ```
 
@@ -210,16 +241,16 @@ OrderEnum->tryFromStash('not-exists')  # -> undef
 Получить case по псевдониму c исключением.
 
 ```perl
-AuthorEnum->fromAlias('Yacheykin Uriy') # -> AuthorEnum->Yacheykin
+AuthorEnum->fromAlias('Yacheykin Uriy') # -> AuthorEnum->yacheykin
 eval { AuthorEnum->fromAlias('not-exists') }; $@ # ~> Did not case with alias `not-exists`!
 ```
 
 ## tryFromAlias ($cls, $alias)
 
-Получить case по псевдониму
+Получить case по псевдониму.
 
 ```perl
-AuthorEnum->tryFromAlias('Yacheykin Uriy') # -> AuthorEnum->Yacheykin
+AuthorEnum->tryFromAlias('Yacheykin Uriy') # -> AuthorEnum->yacheykin
 AuthorEnum->tryFromAlias('not-exists')     # -> undef
 ```
 
@@ -233,10 +264,10 @@ AuthorEnum->tryFromAlias('not-exists')     # -> undef
 package NameEnum {
     use Aion::Enum;
 
-    case 'Piter';
+    case piter =>;
 }
 
-NameEnum->Piter->name # => Piter
+NameEnum->piter->name # => piter
 ```
 
 ## value
@@ -247,10 +278,10 @@ NameEnum->Piter->name # => Piter
 package ValueEnum {
     use Aion::Enum;
 
-    case Piter => 'Pan';
+    case piter => 'Pan';
 }
 
-ValueEnum->Piter->value # => Pan
+ValueEnum->piter->value # => Pan
 ```
 
 ## stash
@@ -261,10 +292,10 @@ ValueEnum->Piter->value # => Pan
 package StashEnum {
     use Aion::Enum;
 
-    case Piter => 'Pan', 123;
+    case piter => 'Pan', 123;
 }
 
-StashEnum->Piter->stash # => 123
+StashEnum->piter->stash # => 123
 ```
 
 ## alias
@@ -280,14 +311,14 @@ package AliasEnum;
 use Aion::Enum;
 
 # Piter Pan
-case 'Piter';
+case piter => ;
 
 1;
 ```
 
 ```perl
 require AliasEnum;
-AliasEnum->Piter->alias # => Piter Pan
+AliasEnum->piter->alias # => Piter Pan
 ```
 
 # SEE ALSO
@@ -297,11 +328,9 @@ AliasEnum->Piter->alias # => Piter Pan
 
 # AUTHOR
 
-Yaroslav O. Kosmina [dart@cpan.org](mailto:dart@cpan.org)
+Yaroslav O. Kosmina <dart@cpan.org>
 
 # LICENSE
-
-This is free software; you can redistribute it and/or modify it under the same terms as the Perl 5 programming language system itself.
 
 ⚖ **GPLv3**
 

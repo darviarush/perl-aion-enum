@@ -1,6 +1,9 @@
 msgid "Aion::Enum - перечисления в стиле ООП, когда каждое перечсление является объектом"
 msgstr "Aion :: Enum - Listing in the style of OOP, when each renewal is an object"
 
+msgid "Файл lib/StatusEnum.pm:"
+msgstr "File lib/StatusEnum.pm:"
+
 msgid "`Aion::Enum` позволяет создавать перечисления-объекты. Данные перечисления могут содержать дополнительные методы и свойства. В них можно добавлять роли (с помощью `with`) или использовать их самих как роли."
 msgstr "`Aion :: Enum` allows you to create transfers-objects. These transfers may contain additional methods and properties. You can add roles to them (using `with`) or use them as a role."
 
@@ -18,6 +21,9 @@ msgstr "Indicates the type (ISA) of meanings and additions."
 
 msgid "Её название – отсылка к богине Иссе из повести «Под лунами Марса» Берроуза."
 msgstr "Its name is a reference to the goddess Isse from the story “Under the Moles of Mars” Burrose."
+
+msgid "Файл lib/StringEnum.pm:"
+msgstr "File lib/StringEnum.pm:"
 
 msgid "Список перечислений."
 msgstr "List of transfers."
@@ -58,8 +64,8 @@ msgstr "Get Case for addition."
 msgid "Получить case по псевдониму c исключением."
 msgstr "Get Case by pseudonym with exceptions."
 
-msgid "Получить case по псевдониму"
-msgstr "Get Case by pseudonym"
+msgid "Получить case по псевдониму."
+msgstr "Get case by alias."
 
 msgid "Свойство только для чтения."
 msgstr "Property only for reading."

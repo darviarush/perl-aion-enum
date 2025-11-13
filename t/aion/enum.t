@@ -5,24 +5,40 @@ use common::sense; use open qw/:std :utf8/;  use Carp qw//; use Cwd qw//; use Fi
 # 
 # # VERSION
 # 
-# 0.0.1
+# 0.0.2
 # 
 # # SYNOPSIS
 # 
+# Файл lib/StatusEnum.pm:
+#@> lib/StatusEnum.pm
+#>> package StatusEnum;
+#>> 
+#>> use Aion::Enum;
+#>> 
+#>> # Active status
+#>> case active => 1, 'Active';
+#>> 
+#>> # Passive status
+#>> case passive => 2, 'Passive';
+#>> 
+#>> 1;
+#@< EOF
+# 
 subtest 'SYNOPSIS' => sub { 
-package StatusEnum {
-    use Aion::Enum;
+use StatusEnum;
 
-    case 'Active';
-    case 'Passive';
-}
+::is scalar do {&StatusEnum::active->does('Aion::Enum')}, "1", '&StatusEnum::active->does(\'Aion::Enum\') # => 1';
 
-::is scalar do {&StatusEnum::Active->does('Aion::Enum')}, "1", '&StatusEnum::Active->does(\'Aion::Enum\') # => 1';
+::is scalar do {StatusEnum->active->name}, "active", 'StatusEnum->active->name   # => active';
+::is scalar do {StatusEnum->passive->value}, "2", 'StatusEnum->passive->value # => 2';
+::is scalar do {StatusEnum->active->alias}, "Active status", 'StatusEnum->active->alias  # => Active status';
+::is scalar do {StatusEnum->passive->stash}, "Passive", 'StatusEnum->passive->stash # => Passive';
 
-::is scalar do {StatusEnum->Active->name}, "Active", 'StatusEnum->Active->name  # => Active';
-::is scalar do {StatusEnum->Passive->name}, "Passive", 'StatusEnum->Passive->name # => Passive';
-
-::is_deeply scalar do {[ StatusEnum->names ]}, scalar do {[qw/Active Passive/]}, '[ StatusEnum->names ] # --> [qw/Active Passive/]';
+::is_deeply scalar do {[ StatusEnum->cases   ]}, scalar do {[StatusEnum->active, StatusEnum->passive]}, '[ StatusEnum->cases   ] # --> [StatusEnum->active, StatusEnum->passive]';
+::is_deeply scalar do {[ StatusEnum->names   ]}, scalar do {[qw/active passive/]}, '[ StatusEnum->names   ] # --> [qw/active passive/]';
+::is_deeply scalar do {[ StatusEnum->values  ]}, scalar do {[qw/1 2/]}, '[ StatusEnum->values  ] # --> [qw/1 2/]';
+::is_deeply scalar do {[ StatusEnum->aliases ]}, scalar do {['Active status', 'Passive status']}, '[ StatusEnum->aliases ] # --> [\'Active status\', \'Passive status\']';
+::is_deeply scalar do {[ StatusEnum->stashes ]}, scalar do {[qw/Active Passive/]}, '[ StatusEnum->stashes ] # --> [qw/Active Passive/]';
 
 # 
 # # DESCRIPTION
@@ -43,52 +59,67 @@ package StatusEnum {
 package OrderEnum {
     use Aion::Enum;
 
-    case 'First';
-    case Second => 2;
-    case Other  => 3, {data => 123};
+    case 'first';
+    case second => 2;
+    case other  => 3, {data => 123};
 }
 
-::is scalar do {&OrderEnum::First->name}, "First", '&OrderEnum::First->name  # => First';
-::is scalar do {&OrderEnum::First->value}, scalar do{undef}, '&OrderEnum::First->value # -> undef';
-::is scalar do {&OrderEnum::First->stash}, scalar do{undef}, '&OrderEnum::First->stash # -> undef';
+::is scalar do {&OrderEnum::first->name}, "first", '&OrderEnum::first->name  # => first';
+::is scalar do {&OrderEnum::first->value}, scalar do{undef}, '&OrderEnum::first->value # -> undef';
+::is scalar do {&OrderEnum::first->stash}, scalar do{undef}, '&OrderEnum::first->stash # -> undef';
 
-::is scalar do {&OrderEnum::Second->name}, "Second", '&OrderEnum::Second->name  # => Second';
-::is scalar do {&OrderEnum::Second->value}, scalar do{2}, '&OrderEnum::Second->value # -> 2';
-::is scalar do {&OrderEnum::Second->stash}, scalar do{undef}, '&OrderEnum::Second->stash # -> undef';
+::is scalar do {&OrderEnum::second->name}, "second", '&OrderEnum::second->name  # => second';
+::is scalar do {&OrderEnum::second->value}, scalar do{2}, '&OrderEnum::second->value # -> 2';
+::is scalar do {&OrderEnum::second->stash}, scalar do{undef}, '&OrderEnum::second->stash # -> undef';
 
-::is scalar do {&OrderEnum::Other->name}, "Other", '&OrderEnum::Other->name  # => Other';
-::is scalar do {&OrderEnum::Other->value}, scalar do{3}, '&OrderEnum::Other->value # -> 3';
-::is_deeply scalar do {&OrderEnum::Other->stash}, scalar do {{data => 123}}, '&OrderEnum::Other->stash # --> {data => 123}';
+::is scalar do {&OrderEnum::other->name}, "other", '&OrderEnum::other->name  # => other';
+::is scalar do {&OrderEnum::other->value}, scalar do{3}, '&OrderEnum::other->value # -> 3';
+::is_deeply scalar do {&OrderEnum::other->stash}, scalar do {{data => 123}}, '&OrderEnum::other->stash # --> {data => 123}';
 
 # 
-# ## issa ($valisa, [$staisa])
+# ## issa ($nameisa, [$valueisa], [$stashisa], [$aliasisa])
 # 
 # Указывает тип (isa) значений и дополнений.
 # 
 # Её название – отсылка к богине Иссе из повести «Под лунами Марса» Берроуза.
 # 
-::done_testing; }; subtest 'issa ($valisa, [$staisa])' => sub { 
-eval << 'END';
-package StringEnum {
+::done_testing; }; subtest 'issa ($nameisa, [$valueisa], [$stashisa], [$aliasisa])' => sub { 
+eval {
+package StringEnum;
     use Aion::Enum;
 
-    issa Int;
+    issa Str => Int => Undef => Undef;
 
-    case Active => "active";
-}
-END
-::like scalar do {$@}, qr{Active value must have the type Int. The it is 'active'}, '$@ # ~> Active value must have the type Int. The it is \'active\'';
+    case active => "Active";
+};
+::like scalar do {$@}, qr{active value must have the type Int. The it is 'Active'}, '$@ # ~> active value must have the type Int. The it is \'Active\'';
 
-eval << 'END';
-package StringEnum {
+eval {
+package StringEnum;
     use Aion::Enum;
 
-    issa Str, Int;
+    issa Str => Str => Int;
 
-    case Active => "active", "passive";
-}
-END
-::like scalar do {$@}, qr{Active stash must have the type Int. The it is 'passive'}, '$@ # ~> Active stash must have the type Int. The it is \'passive\'';
+    case active => "Active", "Passive";
+};
+::like scalar do {$@}, qr{active stash must have the type Int. The it is 'Passive'}, '$@ # ~> active stash must have the type Int. The it is \'Passive\'';
+
+# 
+# Файл lib/StringEnum.pm:
+#@> lib/StringEnum.pm
+#>> package StringEnum;
+#>> use Aion::Enum;
+#>> 
+#>> issa Str => Undef => Undef => StrMatch[qr/^[A-Z]/];
+#>> 
+#>> # pushkin
+#>> case active => ;
+#>> 
+#>> 1;
+#@< EOF
+# 
+
+::cmp_ok do { eval {require StringEnum}; $@ }, '=~', '^' . quotemeta 'active alias must have the type StrMatch[qr/^[A-Z]/]. The it is \'pushkin\'!', 'require StringEnum # @-> active alias must have the type StrMatch[qr/^[A-Z]/]. The it is \'pushkin\'!';
 
 # 
 # # CLASS METHODS
@@ -98,7 +129,7 @@ END
 # Список перечислений.
 # 
 ::done_testing; }; subtest 'cases ($cls)' => sub { 
-::is_deeply scalar do {[ OrderEnum->cases ]}, scalar do {[OrderEnum->First, OrderEnum->Second, OrderEnum->Other]}, '[ OrderEnum->cases ] # --> [OrderEnum->First, OrderEnum->Second, OrderEnum->Other]';
+::is_deeply scalar do {[ OrderEnum->cases ]}, scalar do {[OrderEnum->first, OrderEnum->second, OrderEnum->other]}, '[ OrderEnum->cases ] # --> [OrderEnum->first, OrderEnum->second, OrderEnum->other]';
 
 # 
 # ## names ($cls)
@@ -106,7 +137,7 @@ END
 # Имена перечислений.
 # 
 ::done_testing; }; subtest 'names ($cls)' => sub { 
-::is_deeply scalar do {[ OrderEnum->names ]}, scalar do {[qw/First Second Other/]}, '[ OrderEnum->names ] # --> [qw/First Second Other/]';
+::is_deeply scalar do {[ OrderEnum->names ]}, scalar do {[qw/first second other/]}, '[ OrderEnum->names ] # --> [qw/first second other/]';
 
 # 
 # ## values ($cls)
@@ -136,12 +167,12 @@ END
 #>> use Aion::Enum;
 #>> 
 #>> # Pushkin Aleksandr Sergeevich
-#>> case 'Pushkin';
+#>> case pushkin =>;
 #>> 
 #>> # Yacheykin Uriy
-#>> case 'Yacheykin';
+#>> case yacheykin =>;
 #>> 
-#>> case 'Nouname';
+#>> case nouname =>;
 #>> 
 #>> 1;
 #@< EOF
@@ -156,7 +187,7 @@ require AuthorEnum;
 # Получить case по имени c исключением.
 # 
 ::done_testing; }; subtest 'fromName ($cls, $name)' => sub { 
-::is scalar do {OrderEnum->fromName('First')}, scalar do{OrderEnum->First}, 'OrderEnum->fromName(\'First\') # -> OrderEnum->First';
+::is scalar do {OrderEnum->fromName('first')}, scalar do{OrderEnum->first}, 'OrderEnum->fromName(\'first\') # -> OrderEnum->first';
 ::like scalar do {eval { OrderEnum->fromName('not_exists') }; $@}, qr{Did not case with name `not_exists`\!}, 'eval { OrderEnum->fromName(\'not_exists\') }; $@ # ~> Did not case with name `not_exists`!';
 
 # 
@@ -165,7 +196,7 @@ require AuthorEnum;
 # Получить case по имени.
 # 
 ::done_testing; }; subtest 'tryFromName ($cls, $name)' => sub { 
-::is scalar do {OrderEnum->tryFromName('First')}, scalar do{OrderEnum->First}, 'OrderEnum->tryFromName(\'First\')      # -> OrderEnum->First';
+::is scalar do {OrderEnum->tryFromName('first')}, scalar do{OrderEnum->first}, 'OrderEnum->tryFromName(\'first\')      # -> OrderEnum->first';
 ::is scalar do {OrderEnum->tryFromName('not_exists')}, scalar do{undef}, 'OrderEnum->tryFromName(\'not_exists\') # -> undef';
 
 # 
@@ -174,7 +205,7 @@ require AuthorEnum;
 # Получить case по значению c исключением.
 # 
 ::done_testing; }; subtest 'fromValue ($cls, $value)' => sub { 
-::is scalar do {OrderEnum->fromValue(undef)}, scalar do{OrderEnum->First}, 'OrderEnum->fromValue(undef) # -> OrderEnum->First';
+::is scalar do {OrderEnum->fromValue(undef)}, scalar do{OrderEnum->first}, 'OrderEnum->fromValue(undef) # -> OrderEnum->first';
 ::like scalar do {eval { OrderEnum->fromValue('not-exists') }; $@}, qr{Did not case with value `not-exists`\!}, 'eval { OrderEnum->fromValue(\'not-exists\') }; $@ # ~> Did not case with value `not-exists`!';
 
 # 
@@ -183,7 +214,7 @@ require AuthorEnum;
 # Получить case по значению.
 # 
 ::done_testing; }; subtest 'tryFromValue ($cls, $value)' => sub { 
-::is scalar do {OrderEnum->tryFromValue(undef)}, scalar do{OrderEnum->First}, 'OrderEnum->tryFromValue(undef)        # -> OrderEnum->First';
+::is scalar do {OrderEnum->tryFromValue(undef)}, scalar do{OrderEnum->first}, 'OrderEnum->tryFromValue(undef)        # -> OrderEnum->first';
 ::is scalar do {OrderEnum->tryFromValue('not-exists')}, scalar do{undef}, 'OrderEnum->tryFromValue(\'not-exists\') # -> undef';
 
 # 
@@ -192,7 +223,7 @@ require AuthorEnum;
 # Получить case по дополнению c исключением.
 # 
 ::done_testing; }; subtest 'fromStash ($cls, $stash)' => sub { 
-::is scalar do {OrderEnum->fromStash(undef)}, scalar do{OrderEnum->First}, 'OrderEnum->fromStash(undef) # -> OrderEnum->First';
+::is scalar do {OrderEnum->fromStash(undef)}, scalar do{OrderEnum->first}, 'OrderEnum->fromStash(undef) # -> OrderEnum->first';
 ::like scalar do {eval { OrderEnum->fromStash('not-exists') }; $@}, qr{Did not case with stash `not-exists`\!}, 'eval { OrderEnum->fromStash(\'not-exists\') }; $@ # ~> Did not case with stash `not-exists`!';
 
 # 
@@ -201,7 +232,7 @@ require AuthorEnum;
 # Получить case по дополнению.
 # 
 ::done_testing; }; subtest 'tryFromStash ($cls, $value)' => sub { 
-::is scalar do {OrderEnum->tryFromStash({data => 123})}, scalar do{OrderEnum->Other}, 'OrderEnum->tryFromStash({data => 123}) # -> OrderEnum->Other';
+::is scalar do {OrderEnum->tryFromStash({data => 123})}, scalar do{OrderEnum->other}, 'OrderEnum->tryFromStash({data => 123}) # -> OrderEnum->other';
 ::is scalar do {OrderEnum->tryFromStash('not-exists')}, scalar do{undef}, 'OrderEnum->tryFromStash(\'not-exists\')  # -> undef';
 
 # 
@@ -210,16 +241,16 @@ require AuthorEnum;
 # Получить case по псевдониму c исключением.
 # 
 ::done_testing; }; subtest 'fromAlias ($cls, $alias)' => sub { 
-::is scalar do {AuthorEnum->fromAlias('Yacheykin Uriy')}, scalar do{AuthorEnum->Yacheykin}, 'AuthorEnum->fromAlias(\'Yacheykin Uriy\') # -> AuthorEnum->Yacheykin';
+::is scalar do {AuthorEnum->fromAlias('Yacheykin Uriy')}, scalar do{AuthorEnum->yacheykin}, 'AuthorEnum->fromAlias(\'Yacheykin Uriy\') # -> AuthorEnum->yacheykin';
 ::like scalar do {eval { AuthorEnum->fromAlias('not-exists') }; $@}, qr{Did not case with alias `not-exists`\!}, 'eval { AuthorEnum->fromAlias(\'not-exists\') }; $@ # ~> Did not case with alias `not-exists`!';
 
 # 
 # ## tryFromAlias ($cls, $alias)
 # 
-# Получить case по псевдониму
+# Получить case по псевдониму.
 # 
 ::done_testing; }; subtest 'tryFromAlias ($cls, $alias)' => sub { 
-::is scalar do {AuthorEnum->tryFromAlias('Yacheykin Uriy')}, scalar do{AuthorEnum->Yacheykin}, 'AuthorEnum->tryFromAlias(\'Yacheykin Uriy\') # -> AuthorEnum->Yacheykin';
+::is scalar do {AuthorEnum->tryFromAlias('Yacheykin Uriy')}, scalar do{AuthorEnum->yacheykin}, 'AuthorEnum->tryFromAlias(\'Yacheykin Uriy\') # -> AuthorEnum->yacheykin';
 ::is scalar do {AuthorEnum->tryFromAlias('not-exists')}, scalar do{undef}, 'AuthorEnum->tryFromAlias(\'not-exists\')     # -> undef';
 
 # 
@@ -233,10 +264,10 @@ require AuthorEnum;
 package NameEnum {
     use Aion::Enum;
 
-    case 'Piter';
+    case piter =>;
 }
 
-::is scalar do {NameEnum->Piter->name}, "Piter", 'NameEnum->Piter->name # => Piter';
+::is scalar do {NameEnum->piter->name}, "piter", 'NameEnum->piter->name # => piter';
 
 # 
 # ## value
@@ -247,10 +278,10 @@ package NameEnum {
 package ValueEnum {
     use Aion::Enum;
 
-    case Piter => 'Pan';
+    case piter => 'Pan';
 }
 
-::is scalar do {ValueEnum->Piter->value}, "Pan", 'ValueEnum->Piter->value # => Pan';
+::is scalar do {ValueEnum->piter->value}, "Pan", 'ValueEnum->piter->value # => Pan';
 
 # 
 # ## stash
@@ -261,10 +292,10 @@ package ValueEnum {
 package StashEnum {
     use Aion::Enum;
 
-    case Piter => 'Pan', 123;
+    case piter => 'Pan', 123;
 }
 
-::is scalar do {StashEnum->Piter->stash}, "123", 'StashEnum->Piter->stash # => 123';
+::is scalar do {StashEnum->piter->stash}, "123", 'StashEnum->piter->stash # => 123';
 
 # 
 # ## alias
@@ -280,14 +311,14 @@ package StashEnum {
 #>> use Aion::Enum;
 #>> 
 #>> # Piter Pan
-#>> case 'Piter';
+#>> case piter => ;
 #>> 
 #>> 1;
 #@< EOF
 # 
 ::done_testing; }; subtest 'alias' => sub { 
 require AliasEnum;
-::is scalar do {AliasEnum->Piter->alias}, "Piter Pan", 'AliasEnum->Piter->alias # => Piter Pan';
+::is scalar do {AliasEnum->piter->alias}, "Piter Pan", 'AliasEnum->piter->alias # => Piter Pan';
 
 # 
 # # SEE ALSO

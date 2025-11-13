@@ -83,7 +83,7 @@
          "web" : "https://github.com/darviarush/perl-aion-enum"
       }
    },
-   "version" : "0.0.2",
+   "version" : "0.0.3",
    "x_authority" : "cpan:DART",
    "x_contributors" : [
       "Yaroslav O. Kosmina <dart@cpan.org>"

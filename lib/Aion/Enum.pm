@@ -3,7 +3,7 @@ use 5.22.0;
 no strict; no warnings; no diagnostics;
 use common::sense;
 
-our $VERSION = "0.0.2";
+our $VERSION = "0.0.3";
 
 use constant;
 use Aion -role;
@@ -23,9 +23,16 @@ sub unimport {
 	eval "package $pkg; no Aion; 1" or die
 }
 
-#@category Управленцы
+#@category Свойства
+has name  => (is => 'ro');
+has value => (is => 'ro');
+has stash => (is => 'ro');
+has alias => (is => 'ro', default => sub {
+    my ($self) = @_;
+    $self->_alias->{$self->{name}};
+});
 
-my %ENUM;
+#@category Управленцы
 
 # Создать перечисление
 sub case(@) {
@@ -34,12 +41,14 @@ sub case(@) {
 	die "The case name must by 1+ simbol!" unless length $name;
 	
 	my $pkg = caller;
-
-	my $valisa = ${"${pkg}::__VALUE_ISA__"};
-	$valisa && $valisa->validate($value, "$name value");
+	my $meta = $Aion::META{$pkg};
+	my $issa = $meta->{issa};
+	my $enum = $meta->{enum} //= [];
 	
-	my $staisa = ${"${pkg}::__STASH_ISA__"};
-	$staisa && $staisa->validate($stash, "$name stash");
+	$issa->{name}->validate($name, "$name name") if $issa->{name};
+	$issa->{value}->validate($value, "$name value") if $issa->{value};
+	$issa->{stash}->validate($stash, "$name stash") if $issa->{stash};
+	$issa->{alias}->validate($pkg->_alias->{$name}, "$name alias") if $issa->{alias};
 	
 	my $case = bless {
         name => $name,
@@ -47,28 +56,23 @@ sub case(@) {
         defined($stash)? (stash => $stash): (),
     }, $pkg;
 
+    push @$enum, $case;
+
     constant->import("${pkg}::$name", $case);
-
-    push @{$ENUM{$pkg}}, $case;
-
-    eval "package $pkg { has name  => (is => 'ro') }; 1" or die;
-    eval "package $pkg { has value => (is => 'ro') }; 1" or die;
-    eval "package $pkg { has stash => (is => 'ro') }; 1" or die;
-    eval "package $pkg { has alias => (is => 'ro', default => sub {
-        my (\$self) = \@_;
-        \$self->aliases;
-        \$self->{alias}
-    })}; 1" or die;
 
     return;
 }
 
 # Задаёт типы для value и stash
 sub issa(@) {
-	my ($valisa, $staisa) = @_;
 	my $pkg = caller;
-	${"${pkg}::__VALUE_ISA__"} = $valisa;
-	${"${pkg}::__STASH_ISA__"} = $staisa;
+	my ($nameisa, $valueisa, $stashisa, $aliasisa) = map { ref $_ eq '' ? eval "package $pkg; $_" || die : $_ } @_;
+	$Aion::META{$pkg}{issa} = {
+		name => $nameisa,
+		value => $valueisa,
+		stash => $stashisa,
+		alias => $aliasisa,
+	};
 	return;
 }
 
@@ -77,7 +81,7 @@ sub issa(@) {
 # Перечисления
 sub cases {
 	my ($cls) = @_;
-	@{$ENUM{ref $cls || $cls}}
+	@{$Aion::META{ref $cls || $cls}{enum}}
 }
 
 # Имена
@@ -101,38 +105,46 @@ sub stashes {
 # Псевдонимы
 sub aliases {
 	my ($cls) = @_;
-	$cls = ref $cls || $cls;
-	unless(exists $ENUM{$cls}[0]{alias}) {
-        $_->{alias} = undef for $cls->cases;
-	
-        my $path = $INC{($cls =~ s!::!/!gr) . ".pm"};
-        open my $f, "<:utf8", $path or die "$path: $!";
-        my $alias;
-        my $id = '[a-zA-Z_]\w*';
-        while(<$f>) {
-            $alias = $1 if /^# (\S.*?)\s*$/;
+	map $_->alias, $cls->cases
+}
 
-            UNIVERSAL::isa(&{"${cls}::$+{id}"}, $cls)
-                && do {
-                    (&{"${cls}::$+{id}"})->{alias} = $alias;
-                    undef $alias;
-                }
-            if /^case \s+ (
-                   (?<id>$id)
-                | '(?<id>$id)'
-                | "(?<id>$id)"
-                | q[wq]? (?:
-                      \{ (?<id>$id) \}
-                    | \[ (?<id>$id) \]
-                    | \( (?<id>$id) \)
-                    | < (?<id>$id) >
-                    | ([~!\@#$%^&*-+=\\\/|]) (?<id>$id) \2
-                )
-            )/x;
-        }
-        close $f;
-	}
-	map $_->{alias}, $cls->cases
+my %ALIAS;
+sub _alias {
+	my ($cls) = @_;
+	$cls = ref $cls || $cls;
+	my $alias_ref = $ALIAS{$cls};
+	
+	return $alias_ref if $alias_ref;
+	
+	my $alias_ref = $ALIAS{$cls} = {};
+
+    my $path = $INC{($cls =~ s!::!/!gr) . ".pm"};
+    die "$cls not loaded!" unless $path;
+    open my $f, "<:utf8", $path or die "$path: $!";
+    my $alias;
+    my $id = '[a-zA-Z_]\w*';
+    while(<$f>) {
+        $alias = $1 if /^# (\S.*?)\s*$/;
+
+        do {
+            $alias_ref->{$+{id}} = $alias;
+            undef $alias;
+        } if /^case \s+ (
+                (?<id>$id)
+            | '(?<id>$id)'
+            | "(?<id>$id)"
+            | q[wq]? (?:
+                \{ (?<id>$id) \}
+                | \[ (?<id>$id) \]
+                | \( (?<id>$id) \)
+                | < (?<id>$id) >
+                | ([~!\@#$%^&*-+=\\\/|]) (?<id>$id) \2
+            )
+        )/x;
+    }
+    close $f;
+    
+    $alias_ref
 }
 
 #@category Конструкторы
@@ -209,23 +221,40 @@ Aion :: Enum - Listing in the style of OOP, when each renewal is an object
 
 =head1 VERSION
 
-0.0.2
+0.0.3
 
 =head1 SYNOPSIS
 
-	package StatusEnum {
-	    use Aion::Enum;
+File lib/StatusEnum.pm:
+
+	package StatusEnum;
 	
-	    case 'Active';
-	    case 'Passive';
-	}
+	use Aion::Enum;
 	
-	&StatusEnum::Active->does('Aion::Enum') # => 1
+	# Active status
+	case active => 1, 'Active';
 	
-	StatusEnum->Active->name  # => Active
-	StatusEnum->Passive->name # => Passive
+	# Passive status
+	case passive => 2, 'Passive';
 	
-	[ StatusEnum->names ] # --> [qw/Active Passive/]
+	1;
+
+
+
+	use StatusEnum;
+	
+	&StatusEnum::active->does('Aion::Enum') # => 1
+	
+	StatusEnum->active->name   # => active
+	StatusEnum->passive->value # => 2
+	StatusEnum->active->alias  # => Active status
+	StatusEnum->passive->stash # => Passive
+	
+	[ StatusEnum->cases   ] # --> [StatusEnum->active, StatusEnum->passive]
+	[ StatusEnum->names   ] # --> [qw/active passive/]
+	[ StatusEnum->values  ] # --> [qw/1 2/]
+	[ StatusEnum->aliases ] # --> ['Active status', 'Passive status']
+	[ StatusEnum->stashes ] # --> [qw/Active Passive/]
 
 =head1 DESCRIPTION
 
@@ -244,50 +273,64 @@ Creates a listing: his constant.
 	package OrderEnum {
 	    use Aion::Enum;
 	
-	    case 'First';
-	    case Second => 2;
-	    case Other  => 3, {data => 123};
+	    case 'first';
+	    case second => 2;
+	    case other  => 3, {data => 123};
 	}
 	
-	&OrderEnum::First->name  # => First
-	&OrderEnum::First->value # -> undef
-	&OrderEnum::First->stash # -> undef
+	&OrderEnum::first->name  # => first
+	&OrderEnum::first->value # -> undef
+	&OrderEnum::first->stash # -> undef
 	
-	&OrderEnum::Second->name  # => Second
-	&OrderEnum::Second->value # -> 2
-	&OrderEnum::Second->stash # -> undef
+	&OrderEnum::second->name  # => second
+	&OrderEnum::second->value # -> 2
+	&OrderEnum::second->stash # -> undef
 	
-	&OrderEnum::Other->name  # => Other
-	&OrderEnum::Other->value # -> 3
-	&OrderEnum::Other->stash # --> {data => 123}
+	&OrderEnum::other->name  # => other
+	&OrderEnum::other->value # -> 3
+	&OrderEnum::other->stash # --> {data => 123}
 
-=head2 issa ($valisa, [$staisa])
+=head2 issa ($nameisa, [$valueisa], [$stashisa], [$aliasisa])
 
 Indicates the type (ISA) of meanings and additions.
 
 Its name is a reference to the goddess Isse from the story “Under the Moles of Mars” Burrose.
 
-	eval << 'END';
-	package StringEnum {
+	eval {
+	package StringEnum;
 	    use Aion::Enum;
 	
-	    issa Int;
+	    issa Str => Int => Undef => Undef;
 	
-	    case Active => "active";
-	}
-	END
-	$@ # ~> Active value must have the type Int. The it is 'active'
+	    case active => "Active";
+	};
+	$@ # ~> active value must have the type Int. The it is 'Active'
 	
-	eval << 'END';
-	package StringEnum {
+	eval {
+	package StringEnum;
 	    use Aion::Enum;
 	
-	    issa Str, Int;
+	    issa Str => Str => Int;
 	
-	    case Active => "active", "passive";
-	}
-	END
-	$@ # ~> Active stash must have the type Int. The it is 'passive'
+	    case active => "Active", "Passive";
+	};
+	$@ # ~> active stash must have the type Int. The it is 'Passive'
+
+File lib/StringEnum.pm:
+
+	package StringEnum;
+	use Aion::Enum;
+	
+	issa Str => Undef => Undef => StrMatch[qr/^[A-Z]/];
+	
+	# pushkin
+	case active => ;
+	
+	1;
+
+
+
+	require StringEnum # @-> active alias must have the type StrMatch[qr/^[A-Z]/]. The it is 'pushkin'!
 
 =head1 CLASS METHODS
 
@@ -295,13 +338,13 @@ Its name is a reference to the goddess Isse from the story “Under the Moles of
 
 List of transfers.
 
-	[ OrderEnum->cases ] # --> [OrderEnum->First, OrderEnum->Second, OrderEnum->Other]
+	[ OrderEnum->cases ] # --> [OrderEnum->first, OrderEnum->second, OrderEnum->other]
 
 =head2 names ($cls)
 
 Names of transfers.
 
-	[ OrderEnum->names ] # --> [qw/First Second Other/]
+	[ OrderEnum->names ] # --> [qw/first second other/]
 
 =head2 values ($cls)
 
@@ -326,12 +369,12 @@ LIB/authorenum.pm file:
 	use Aion::Enum;
 	
 	# Pushkin Aleksandr Sergeevich
-	case 'Pushkin';
+	case pushkin =>;
 	
 	# Yacheykin Uriy
-	case 'Yacheykin';
+	case yacheykin =>;
 	
-	case 'Nouname';
+	case nouname =>;
 	
 	1;
 
@@ -344,56 +387,56 @@ LIB/authorenum.pm file:
 
 Get Case by name with exceptions.
 
-	OrderEnum->fromName('First') # -> OrderEnum->First
+	OrderEnum->fromName('first') # -> OrderEnum->first
 	eval { OrderEnum->fromName('not_exists') }; $@ # ~> Did not case with name `not_exists`!
 
 =head2 tryFromName ($cls, $name)
 
 Get Case by name.
 
-	OrderEnum->tryFromName('First')      # -> OrderEnum->First
+	OrderEnum->tryFromName('first')      # -> OrderEnum->first
 	OrderEnum->tryFromName('not_exists') # -> undef
 
 =head2 fromValue ($cls, $value)
 
 Get Case by value with exceptions.
 
-	OrderEnum->fromValue(undef) # -> OrderEnum->First
+	OrderEnum->fromValue(undef) # -> OrderEnum->first
 	eval { OrderEnum->fromValue('not-exists') }; $@ # ~> Did not case with value `not-exists`!
 
 =head2 tryFromValue ($cls, $value)
 
 Get Case by value.
 
-	OrderEnum->tryFromValue(undef)        # -> OrderEnum->First
+	OrderEnum->tryFromValue(undef)        # -> OrderEnum->first
 	OrderEnum->tryFromValue('not-exists') # -> undef
 
 =head2 fromStash ($cls, $stash)
 
 Get CASE on addition with exceptions.
 
-	OrderEnum->fromStash(undef) # -> OrderEnum->First
+	OrderEnum->fromStash(undef) # -> OrderEnum->first
 	eval { OrderEnum->fromStash('not-exists') }; $@ # ~> Did not case with stash `not-exists`!
 
 =head2 tryFromStash ($cls, $value)
 
 Get Case for addition.
 
-	OrderEnum->tryFromStash({data => 123}) # -> OrderEnum->Other
+	OrderEnum->tryFromStash({data => 123}) # -> OrderEnum->other
 	OrderEnum->tryFromStash('not-exists')  # -> undef
 
 =head2 fromAlias ($cls, $alias)
 
 Get Case by pseudonym with exceptions.
 
-	AuthorEnum->fromAlias('Yacheykin Uriy') # -> AuthorEnum->Yacheykin
+	AuthorEnum->fromAlias('Yacheykin Uriy') # -> AuthorEnum->yacheykin
 	eval { AuthorEnum->fromAlias('not-exists') }; $@ # ~> Did not case with alias `not-exists`!
 
 =head2 tryFromAlias ($cls, $alias)
 
-Get Case by pseudonym
+Get case by alias.
 
-	AuthorEnum->tryFromAlias('Yacheykin Uriy') # -> AuthorEnum->Yacheykin
+	AuthorEnum->tryFromAlias('Yacheykin Uriy') # -> AuthorEnum->yacheykin
 	AuthorEnum->tryFromAlias('not-exists')     # -> undef
 
 =head1 FEATURES
@@ -405,10 +448,10 @@ Property only for reading.
 	package NameEnum {
 	    use Aion::Enum;
 	
-	    case 'Piter';
+	    case piter =>;
 	}
 	
-	NameEnum->Piter->name # => Piter
+	NameEnum->piter->name # => piter
 
 =head2 value
 
@@ -417,10 +460,10 @@ Property only for reading.
 	package ValueEnum {
 	    use Aion::Enum;
 	
-	    case Piter => 'Pan';
+	    case piter => 'Pan';
 	}
 	
-	ValueEnum->Piter->value # => Pan
+	ValueEnum->piter->value # => Pan
 
 =head2 stash
 
@@ -429,10 +472,10 @@ Property only for reading.
 	package StashEnum {
 	    use Aion::Enum;
 	
-	    case Piter => 'Pan', 123;
+	    case piter => 'Pan', 123;
 	}
 	
-	StashEnum->Piter->stash # => 123
+	StashEnum->piter->stash # => 123
 
 =head2 alias
 
@@ -447,14 +490,14 @@ LIB/aliasenum.pm file:
 	use Aion::Enum;
 	
 	# Piter Pan
-	case 'Piter';
+	case piter => ;
 	
 	1;
 
 
 
 	require AliasEnum;
-	AliasEnum->Piter->alias # => Piter Pan
+	AliasEnum->piter->alias # => Piter Pan
 
 =head1 SEE ALSO
 
