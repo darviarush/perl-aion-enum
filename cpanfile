@@ -1,4 +1,4 @@
-requires 'perl', '5.008001';
+requires 'perl', '5.22.0';
 
 on 'develop' => sub {
 	requires 'App::cpm';

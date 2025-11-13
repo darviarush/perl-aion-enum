@@ -2,6 +2,10 @@ Revision history for Perl extension Aion::Enum
 
 {{$NEXT}}
 
+0.0.2 2025-11-13T07:17:55Z
+
+    - corrected cpanfile dependencies
+
 0.0.1 2025-11-13T07:01:16Z
 
     - change version
