@@ -1,5 +1,4 @@
-use common::sense; use open qw/:std :utf8/;  use Carp qw//; use File::Basename qw//; use File::Find qw//; use File::Slurper qw//; use File::Spec qw//; use File::Path qw//; use Scalar::Util qw//;  use Test::More 0.98;  BEGIN {     $SIG{__DIE__} = sub {         my ($s) = @_;         if(ref $s) {             $s->{STACKTRACE} = Carp::longmess "?" if "HASH" eq Scalar::Util::reftype $s;             die $s;         } else {             die Carp::longmess defined($s)? $s: "undef"         }     };      my $t = File::Slurper::read_text(__FILE__);     my $s =  '/tmp/.liveman/perl-aion-enum/aion!enum'    ;     File::Find::find(sub { chmod 0700, $_ if !/^\.{1,2}\z/ }, $s), File::Path::rmtree($s) if -e $s;     File::Path::mkpath($s);     chdir $s or die "chdir $s: $!";     push @INC, "lib";      while($t =~ /^#\@> (.*)\n((#>> .*\n)*)#\@< EOF\n/gm) {         my ($file, $code) = ($1, $2);         $code =~ s/^#>> //mg;         File::Path::mkpath(File::Basename::dirname($file));         File::Slurper::write_text($file, $code);     }  } # 
-# [![Coverage](https://raw.githubusercontent.com/darviarush/perl-aion-enum/master/doc/badges/total.svg?sanitize=true)](http://matrix.cpantesters.org/?dist=Aion::Enum)
+use common::sense; use open qw/:std :utf8/;  use Carp qw//; use Cwd qw//; use File::Basename qw//; use File::Find qw//; use File::Slurper qw//; use File::Spec qw//; use File::Path qw//; use Scalar::Util qw//;  use Test::More 0.98;  BEGIN { 	$SIG{__DIE__} = sub { 		my ($msg) = @_; 		if(ref $msg) { 			$msg->{STACKTRACE} = Carp::longmess "?" if "HASH" eq Scalar::Util::reftype $msg; 			die $msg; 		} else { 			die Carp::longmess defined($msg)? $msg: "undef" 		} 	}; 	 	my $t = File::Slurper::read_text(__FILE__); 	 	my @dirs = File::Spec->splitdir(File::Basename::dirname(Cwd::abs_path(__FILE__))); 	my $project_dir = File::Spec->catfile(@dirs[0..$#dirs-2]); 	my $project_name = $dirs[$#dirs-2]; 	my @test_dirs = @dirs[$#dirs-2+2 .. $#dirs];  	my $dir_for_tests = File::Spec->catfile(File::Spec->tmpdir, ".liveman", $project_name, join("!", @test_dirs, File::Basename::basename(__FILE__))); 	 	File::Find::find(sub { chmod 0700, $_ if !/^\.{1,2}\z/ }, $dir_for_tests), File::Path::rmtree($dir_for_tests) if -e $dir_for_tests; 	File::Path::mkpath($dir_for_tests); 	 	chdir $dir_for_tests or die "chdir $dir_for_tests: $!"; 	 	push @INC, "$project_dir/lib", "lib"; 	 	$ENV{PROJECT_DIR} = $project_dir; 	$ENV{DIR_FOR_TESTS} = $dir_for_tests; 	 	while($t =~ /^#\@> (.*)\n((#>> .*\n)*)#\@< EOF\n/gm) { 		my ($file, $code) = ($1, $2); 		$code =~ s/^#>> //mg; 		File::Path::mkpath(File::Basename::dirname($file)); 		File::Slurper::write_text($file, $code); 	} } # 
 # # NAME
 # 
 # Aion::Enum - перечисления в стиле ООП, когда каждое перечсление является объектом
@@ -18,8 +17,7 @@ package StatusEnum {
     case 'Passive';
 }
 
-::is scalar do {&StatusEnum::Active->isa('StatusEnum')}, "1", '&StatusEnum::Active->isa(\'StatusEnum\')   # => 1';
-::is scalar do {StatusEnum::Active()->does('Aion::Enum')}, "1", 'StatusEnum::Active()->does(\'Aion::Enum\') # => 1';
+::is scalar do {&StatusEnum::Active->does('Aion::Enum')}, "1", '&StatusEnum::Active->does(\'Aion::Enum\') # => 1';
 
 ::is scalar do {StatusEnum->Active->name}, "Active", 'StatusEnum->Active->name  # => Active';
 ::is scalar do {StatusEnum->Passive->name}, "Passive", 'StatusEnum->Passive->name # => Passive';
@@ -33,13 +31,15 @@ package StatusEnum {
 # 
 # Важной особенностью является сохранение порядка перечисления.
 # 
+# `Aion::Enum` подобен перечислениям из php8, но имеет дополнительные свойства `alias` и `stash`.
+# 
 # # SUBROUTINES
 # 
 # ## case ($name, [$value, [$stash]])
 # 
 # Создаёт перечисление: его константу.
 # 
-done_testing; }; subtest 'case ($name, [$value, [$stash]])' => sub { 
+::done_testing; }; subtest 'case ($name, [$value, [$stash]])' => sub { 
 package OrderEnum {
     use Aion::Enum;
 
@@ -67,7 +67,7 @@ package OrderEnum {
 # 
 # Её название – отсылка к богине Иссе из повести «Под лунами Марса» Берроуза.
 # 
-done_testing; }; subtest 'issa ($valisa, [$staisa])' => sub { 
+::done_testing; }; subtest 'issa ($valisa, [$staisa])' => sub { 
 eval << 'END';
 package StringEnum {
     use Aion::Enum;
@@ -77,7 +77,7 @@ package StringEnum {
     case Active => "active";
 }
 END
-::like scalar do {$@}, qr!Active value must have the type Int. The it is 'active'!, '$@ # ~> Active value must have the type Int. The it is \'active\'';
+::like scalar do {$@}, qr{Active value must have the type Int. The it is 'active'}, '$@ # ~> Active value must have the type Int. The it is \'active\'';
 
 eval << 'END';
 package StringEnum {
@@ -88,7 +88,7 @@ package StringEnum {
     case Active => "active", "passive";
 }
 END
-::like scalar do {$@}, qr!Active stash must have the type Int. The it is 'passive'!, '$@ # ~> Active stash must have the type Int. The it is \'passive\'';
+::like scalar do {$@}, qr{Active stash must have the type Int. The it is 'passive'}, '$@ # ~> Active stash must have the type Int. The it is \'passive\'';
 
 # 
 # # CLASS METHODS
@@ -97,7 +97,7 @@ END
 # 
 # Список перечислений.
 # 
-done_testing; }; subtest 'cases ($cls)' => sub { 
+::done_testing; }; subtest 'cases ($cls)' => sub { 
 ::is_deeply scalar do {[ OrderEnum->cases ]}, scalar do {[OrderEnum->First, OrderEnum->Second, OrderEnum->Other]}, '[ OrderEnum->cases ] # --> [OrderEnum->First, OrderEnum->Second, OrderEnum->Other]';
 
 # 
@@ -105,7 +105,7 @@ done_testing; }; subtest 'cases ($cls)' => sub {
 # 
 # Имена перечислений.
 # 
-done_testing; }; subtest 'names ($cls)' => sub { 
+::done_testing; }; subtest 'names ($cls)' => sub { 
 ::is_deeply scalar do {[ OrderEnum->names ]}, scalar do {[qw/First Second Other/]}, '[ OrderEnum->names ] # --> [qw/First Second Other/]';
 
 # 
@@ -113,7 +113,7 @@ done_testing; }; subtest 'names ($cls)' => sub {
 # 
 # Значения перечислений.
 # 
-done_testing; }; subtest 'values ($cls)' => sub { 
+::done_testing; }; subtest 'values ($cls)' => sub { 
 ::is_deeply scalar do {[ OrderEnum->values ]}, scalar do {[undef, 2, 3]}, '[ OrderEnum->values ] # --> [undef, 2, 3]';
 
 # 
@@ -121,7 +121,7 @@ done_testing; }; subtest 'values ($cls)' => sub {
 # 
 # Дополнения перечислений.
 # 
-done_testing; }; subtest 'stashes ($cls)' => sub { 
+::done_testing; }; subtest 'stashes ($cls)' => sub { 
 ::is_deeply scalar do {[ OrderEnum->stashes ]}, scalar do {[undef, undef, {data => 123}]}, '[ OrderEnum->stashes ] # --> [undef, undef, {data => 123}]';
 
 # 
@@ -146,7 +146,7 @@ done_testing; }; subtest 'stashes ($cls)' => sub {
 #>> 1;
 #@< EOF
 # 
-done_testing; }; subtest 'aliases ($cls)' => sub { 
+::done_testing; }; subtest 'aliases ($cls)' => sub { 
 require AuthorEnum;
 ::is_deeply scalar do {[ AuthorEnum->aliases ]}, scalar do {['Pushkin Aleksandr Sergeevich', 'Yacheykin Uriy', undef]}, '[ AuthorEnum->aliases ] # --> [\'Pushkin Aleksandr Sergeevich\', \'Yacheykin Uriy\', undef]';
 
@@ -155,16 +155,16 @@ require AuthorEnum;
 # 
 # Получить case по имени c исключением.
 # 
-done_testing; }; subtest 'fromName ($cls, $name)' => sub { 
+::done_testing; }; subtest 'fromName ($cls, $name)' => sub { 
 ::is scalar do {OrderEnum->fromName('First')}, scalar do{OrderEnum->First}, 'OrderEnum->fromName(\'First\') # -> OrderEnum->First';
-::like scalar do {eval { OrderEnum->fromName('not_exists') }; $@}, qr!Did not case with name `not_exists`\!!, 'eval { OrderEnum->fromName(\'not_exists\') }; $@ # ~> Did not case with name `not_exists`!';
+::like scalar do {eval { OrderEnum->fromName('not_exists') }; $@}, qr{Did not case with name `not_exists`\!}, 'eval { OrderEnum->fromName(\'not_exists\') }; $@ # ~> Did not case with name `not_exists`!';
 
 # 
 # ## tryFromName ($cls, $name)
 # 
 # Получить case по имени.
 # 
-done_testing; }; subtest 'tryFromName ($cls, $name)' => sub { 
+::done_testing; }; subtest 'tryFromName ($cls, $name)' => sub { 
 ::is scalar do {OrderEnum->tryFromName('First')}, scalar do{OrderEnum->First}, 'OrderEnum->tryFromName(\'First\')      # -> OrderEnum->First';
 ::is scalar do {OrderEnum->tryFromName('not_exists')}, scalar do{undef}, 'OrderEnum->tryFromName(\'not_exists\') # -> undef';
 
@@ -173,16 +173,16 @@ done_testing; }; subtest 'tryFromName ($cls, $name)' => sub {
 # 
 # Получить case по значению c исключением.
 # 
-done_testing; }; subtest 'fromValue ($cls, $value)' => sub { 
+::done_testing; }; subtest 'fromValue ($cls, $value)' => sub { 
 ::is scalar do {OrderEnum->fromValue(undef)}, scalar do{OrderEnum->First}, 'OrderEnum->fromValue(undef) # -> OrderEnum->First';
-::like scalar do {eval { OrderEnum->fromValue('not-exists') }; $@}, qr!Did not case with value `not-exists`\!!, 'eval { OrderEnum->fromValue(\'not-exists\') }; $@ # ~> Did not case with value `not-exists`!';
+::like scalar do {eval { OrderEnum->fromValue('not-exists') }; $@}, qr{Did not case with value `not-exists`\!}, 'eval { OrderEnum->fromValue(\'not-exists\') }; $@ # ~> Did not case with value `not-exists`!';
 
 # 
 # ## tryFromValue ($cls, $value)
 # 
 # Получить case по значению.
 # 
-done_testing; }; subtest 'tryFromValue ($cls, $value)' => sub { 
+::done_testing; }; subtest 'tryFromValue ($cls, $value)' => sub { 
 ::is scalar do {OrderEnum->tryFromValue(undef)}, scalar do{OrderEnum->First}, 'OrderEnum->tryFromValue(undef)        # -> OrderEnum->First';
 ::is scalar do {OrderEnum->tryFromValue('not-exists')}, scalar do{undef}, 'OrderEnum->tryFromValue(\'not-exists\') # -> undef';
 
@@ -191,16 +191,16 @@ done_testing; }; subtest 'tryFromValue ($cls, $value)' => sub {
 # 
 # Получить case по дополнению c исключением.
 # 
-done_testing; }; subtest 'fromStash ($cls, $stash)' => sub { 
+::done_testing; }; subtest 'fromStash ($cls, $stash)' => sub { 
 ::is scalar do {OrderEnum->fromStash(undef)}, scalar do{OrderEnum->First}, 'OrderEnum->fromStash(undef) # -> OrderEnum->First';
-::like scalar do {eval { OrderEnum->fromStash('not-exists') }; $@}, qr!Did not case with stash `not-exists`\!!, 'eval { OrderEnum->fromStash(\'not-exists\') }; $@ # ~> Did not case with stash `not-exists`!';
+::like scalar do {eval { OrderEnum->fromStash('not-exists') }; $@}, qr{Did not case with stash `not-exists`\!}, 'eval { OrderEnum->fromStash(\'not-exists\') }; $@ # ~> Did not case with stash `not-exists`!';
 
 # 
 # ## tryFromStash ($cls, $value)
 # 
 # Получить case по дополнению.
 # 
-done_testing; }; subtest 'tryFromStash ($cls, $value)' => sub { 
+::done_testing; }; subtest 'tryFromStash ($cls, $value)' => sub { 
 ::is scalar do {OrderEnum->tryFromStash({data => 123})}, scalar do{OrderEnum->Other}, 'OrderEnum->tryFromStash({data => 123}) # -> OrderEnum->Other';
 ::is scalar do {OrderEnum->tryFromStash('not-exists')}, scalar do{undef}, 'OrderEnum->tryFromStash(\'not-exists\')  # -> undef';
 
@@ -209,16 +209,16 @@ done_testing; }; subtest 'tryFromStash ($cls, $value)' => sub {
 # 
 # Получить case по псевдониму c исключением.
 # 
-done_testing; }; subtest 'fromAlias ($cls, $alias)' => sub { 
+::done_testing; }; subtest 'fromAlias ($cls, $alias)' => sub { 
 ::is scalar do {AuthorEnum->fromAlias('Yacheykin Uriy')}, scalar do{AuthorEnum->Yacheykin}, 'AuthorEnum->fromAlias(\'Yacheykin Uriy\') # -> AuthorEnum->Yacheykin';
-::like scalar do {eval { AuthorEnum->fromAlias('not-exists') }; $@}, qr!Did not case with alias `not-exists`\!!, 'eval { AuthorEnum->fromAlias(\'not-exists\') }; $@ # ~> Did not case with alias `not-exists`!';
+::like scalar do {eval { AuthorEnum->fromAlias('not-exists') }; $@}, qr{Did not case with alias `not-exists`\!}, 'eval { AuthorEnum->fromAlias(\'not-exists\') }; $@ # ~> Did not case with alias `not-exists`!';
 
 # 
 # ## tryFromAlias ($cls, $alias)
 # 
 # Получить case по псевдониму
 # 
-done_testing; }; subtest 'tryFromAlias ($cls, $alias)' => sub { 
+::done_testing; }; subtest 'tryFromAlias ($cls, $alias)' => sub { 
 ::is scalar do {AuthorEnum->tryFromAlias('Yacheykin Uriy')}, scalar do{AuthorEnum->Yacheykin}, 'AuthorEnum->tryFromAlias(\'Yacheykin Uriy\') # -> AuthorEnum->Yacheykin';
 ::is scalar do {AuthorEnum->tryFromAlias('not-exists')}, scalar do{undef}, 'AuthorEnum->tryFromAlias(\'not-exists\')     # -> undef';
 
@@ -229,7 +229,7 @@ done_testing; }; subtest 'tryFromAlias ($cls, $alias)' => sub {
 # 
 # Свойство только для чтения.
 # 
-done_testing; }; subtest 'name' => sub { 
+::done_testing; }; subtest 'name' => sub { 
 package NameEnum {
     use Aion::Enum;
 
@@ -243,7 +243,7 @@ package NameEnum {
 # 
 # Свойство только для чтения.
 # 
-done_testing; }; subtest 'value' => sub { 
+::done_testing; }; subtest 'value' => sub { 
 package ValueEnum {
     use Aion::Enum;
 
@@ -257,7 +257,7 @@ package ValueEnum {
 # 
 # Свойство только для чтения.
 # 
-done_testing; }; subtest 'stash' => sub { 
+::done_testing; }; subtest 'stash' => sub { 
 package StashEnum {
     use Aion::Enum;
 
@@ -285,7 +285,7 @@ package StashEnum {
 #>> 1;
 #@< EOF
 # 
-done_testing; }; subtest 'alias' => sub { 
+::done_testing; }; subtest 'alias' => sub { 
 require AliasEnum;
 ::is scalar do {AliasEnum->Piter->alias}, "Piter Pan", 'AliasEnum->Piter->alias # => Piter Pan';
 
@@ -309,7 +309,7 @@ require AliasEnum;
 # 
 # The Aion::Enum module is copyright © 2025 Yaroslav O. Kosmina. Rusland. All rights reserved.
 
-	done_testing;
+	::done_testing;
 };
 
-done_testing;
+::done_testing;

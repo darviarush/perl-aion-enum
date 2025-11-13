@@ -1,10 +1,10 @@
 {
-   "abstract" : "перечисления в стиле ООП, когда каждое перечсление является объектом",
+   "abstract" : "Listing in the style of OOP, when each renewal is an object",
    "author" : [
       "Yaroslav O. Kosmina LL<mailto:dart@cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v3.1.25, CPAN::Meta::Converter version 2.150010",
+   "generated_by" : "Minilla/v3.1.28, CPAN::Meta::Converter version 2.150010",
    "license" : [
       "gpl_3"
    ],

@@ -1,4 +1,4 @@
-[![Coverage](https://raw.githubusercontent.com/darviarush/perl-aion-enum/master/doc/badges/total.svg?sanitize=true)](http://matrix.cpantesters.org/?dist=Aion::Enum)
+[![Actions Status](https://github.com/darviarush/perl-aion-enum/actions/workflows/test.yml/badge.svg)](https://github.com/darviarush/perl-aion-enum/actions) [![MetaCPAN Release](https://badge.fury.io/pl/Aion-Enum.svg)](https://metacpan.org/release/Aion-Enum) [![Coverage](https://raw.githubusercontent.com/darviarush/perl-aion-enum/master/doc/badges/total.svg)](https://fast2-matrix.cpantesters.org/?dist=Aion-Enum+0.0.0-prealpha)
 # NAME
 
 Aion::Enum - перечисления в стиле ООП, когда каждое перечсление является объектом
@@ -17,8 +17,7 @@ package StatusEnum {
     case 'Passive';
 }
 
-&StatusEnum::Active->isa('StatusEnum')   # => 1
-StatusEnum::Active()->does('Aion::Enum') # => 1
+&StatusEnum::Active->does('Aion::Enum') # => 1
 
 StatusEnum->Active->name  # => Active
 StatusEnum->Passive->name # => Passive
@@ -31,6 +30,8 @@ StatusEnum->Passive->name # => Passive
 `Aion::Enum` позволяет создавать перечисления-объекты. Данные перечисления могут содержать дополнительные методы и свойства. В них можно добавлять роли (с помощью `with`) или использовать их самих как роли.
 
 Важной особенностью является сохранение порядка перечисления.
+
+`Aion::Enum` подобен перечислениям из php8, но имеет дополнительные свойства `alias` и `stash`.
 
 # SUBROUTINES
 

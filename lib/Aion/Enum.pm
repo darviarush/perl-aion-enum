@@ -11,9 +11,16 @@ use Aion -role;
 # Импорт
 sub import {
 	my $pkg = caller;
-	*{"${pkg}::issa"} = \&issa;
-	*{"${pkg}::case"} = \&case;
+	*{"${pkg}::issa"} = \&issa if $pkg->can('issa') != \&issa;
+	*{"${pkg}::case"} = \&case if $pkg->can('case') != \&case;
 	eval "package $pkg; use Aion -role; with 'Aion::Enum'; 1" or die
+}
+
+sub unimport {
+	my $pkg = caller;
+	undef &{"${pkg}::issa"};
+	undef &{"${pkg}::case"};
+	eval "package $pkg; no Aion; 1" or die
 }
 
 #@category Управленцы
@@ -196,7 +203,6 @@ __END__
 
 =encoding utf-8
 
-LL<http://matrix.cpantesters.org/?dist=Aion::Enum>
 =head1 NAME
 
 Aion :: Enum - Listing in the style of OOP, when each renewal is an object
@@ -214,8 +220,7 @@ Aion :: Enum - Listing in the style of OOP, when each renewal is an object
 	    case 'Passive';
 	}
 	
-	&StatusEnum::Active->isa('StatusEnum')   # => 1
-	StatusEnum::Active()->does('Aion::Enum') # => 1
+	&StatusEnum::Active->does('Aion::Enum') # => 1
 	
 	StatusEnum->Active->name  # => Active
 	StatusEnum->Passive->name # => Passive
@@ -227,6 +232,8 @@ Aion :: Enum - Listing in the style of OOP, when each renewal is an object
 C<Aion :: Enum> allows you to create transfers-objects. These transfers may contain additional methods and properties. You can add roles to them (using C<with>) or use them as a role.
 
 An important feature is the preservation of the procedure for listing.
+
+C<Aion::Enum> is similar to php8 enums, but has the additional properties C<alias> and C<stash>.
 
 =head1 SUBROUTINES
 

@@ -7,6 +7,9 @@ msgstr "`Aion :: Enum` allows you to create transfers-objects. These transfers m
 msgid "Важной особенностью является сохранение порядка перечисления."
 msgstr "An important feature is the preservation of the procedure for listing."
 
+msgid "`Aion::Enum` подобен перечислениям из php8, но имеет дополнительные свойства `alias` и `stash`."
+msgstr "`Aion::Enum` is similar to php8 enums, but has the additional properties `alias` and `stash`."
+
 msgid "Создаёт перечисление: его константу."
 msgstr "Creates a listing: his constant."
 
